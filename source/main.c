@@ -119,7 +119,7 @@ int main()
 	printf("Loading sprites...");
 	
 	int i;
-	for(i = 0; i < num_mon; i++)
+	for(i = 0; i < 32; i++)
 	{
 	    gfread(mon_garc, i, &decomp_out, &decomp_size); 	
 	    sf2d_texture *mon_sprite = create_texture_from_xy7_clim(decomp_out, decomp_size);
