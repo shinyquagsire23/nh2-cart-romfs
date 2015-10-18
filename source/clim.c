@@ -10,7 +10,7 @@ const u8 sf2d_to_clim[14] = { CLIM_RGBA8, CLIM_RGB8, CLIM_RGB5A1, CLIM_RGB565, C
 
 void clim_draw_texture(const sf2d_texture *texture, int x, int y)
 {
-    sf2d_draw_texture_part(texture, x, y, 0, next_pow2(texture->height) - texture->height, texture->width, texture->height);
+    sf2d_draw_texture_part_scale(texture, x, y+texture->height, 0, next_pow2(texture->height) - texture->height, texture->width, texture->height, 1, -1);
 }
 
 sf2d_texture *load_texture_from_darc(void *darc_data, char *path)
@@ -26,9 +26,6 @@ sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size)
     clim_header *clim_h = decomp_out + (decomp_size - 0x28);
 	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, clim_to_sf2d[clim_h->format], SF2D_PLACE_RAM);
 	memcpy(tex->data, decomp_out, clim_h->pixel_data_size);
-	
-	tex->flip_h = 0;
-	tex->flip_v = 1;
 	return tex;
 }
 
@@ -55,9 +52,6 @@ sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size)
 	        *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
 	    }
 	}
-	
-	tex->flip_h = 0;
-	tex->flip_v = 1;
 	return tex;
 }
 
