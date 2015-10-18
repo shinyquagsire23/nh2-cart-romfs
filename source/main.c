@@ -251,10 +251,17 @@ sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size)
 	
 	//Un-palette the data
 	int i;
-	for(i = 0; i < (next_pow2(clim_h->width) * next_pow2(clim_h->height)) / 2; i++)
+	for(i = 0; i < (next_pow2(clim_h->width) * next_pow2(clim_h->height)) / (num_colors > 0x10 ? 1 : 2); i++)
 	{
-	    *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16))) = palette[(pixel_data[i] & 0xF0) >> 4];
-	    *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
+	    if(num_colors > 0x10)
+	    {
+	        *(u16*)(tex->data + (i * sizeof(u16))) = palette[pixel_data[i]];
+	    }
+	    else
+	    {
+	        *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16))) = palette[(pixel_data[i] & 0xF0) >> 4];
+	        *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
+	    }
 	}
 	
 	tex->flip_h = 0;
