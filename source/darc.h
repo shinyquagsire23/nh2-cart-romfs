@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -48,3 +52,7 @@ typedef struct
 
 void *pokedarc_get_darc(void *pokedarc_data);
 void *dfget(void *darc_data, char *path, u32 *out_size);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,9 @@
 #include <sf2d.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -39,3 +43,7 @@ typedef enum {
 const u8 clim_to_sf2d[14] = { TEXFMT_I8, TEXFMT_A8, TEXFMT_IA4, TEXFMT_IA8, -1, TEXFMT_RGB565, TEXFMT_RGB8, TEXFMT_RGB5A1, TEXFMT_RGBA4, TEXFMT_RGBA8, TEXFMT_ETC1, TEXFMT_ETC1A4, TEXFMT_I4, TEXFMT_A4 };
 
 const u8 sf2d_to_clim[14] = { CLIM_RGBA8, CLIM_RGB8, CLIM_RGB5A1, CLIM_RGB565, CLIM_RGBA4, CLIM_IA8, -1, CLIM_I8, CLIM_A8, CLIM_IA4, CLIM_I4, CLIM_A4, CLIM_ETC1, CLIM_ETC1A4 };
+
+#ifdef __cplusplus
+}
+#endif

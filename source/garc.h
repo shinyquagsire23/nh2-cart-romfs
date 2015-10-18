@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
     char magic[4]; //CRAG
@@ -43,3 +47,7 @@ typedef struct
 } fimb_entry;
 
 void *gfread(const char* archive, u32 index, void **out, u32 *size_out);
+
+#ifdef __cplusplus
+}
+#endif
