@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <3ds.h>
 
-#include "draw.h"
 #include "clim.h"
 #include "garc.h"
 #include "darc.h"
