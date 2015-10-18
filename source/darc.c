@@ -4,14 +4,20 @@
 
 char *wide_to_char(u16 *data);
 
+//#define DEBUG_DARC
+
 void *pokedarc_get_darc(void *pokedarc_data)
 {
     darc_init_header *darc_init_h = pokedarc_data;
 	darc_init_wat *darc_init_w = pokedarc_data + sizeof(u32) + (darc_init_h->entries * 0x40);
+#ifdef DEBUG_DARC
 	printf("%x wats\n", darc_init_w->entries);
+#endif
 	
 	darc_header *darc_h = pokedarc_data + ((sizeof(u32) + (darc_init_h->entries * 0x40) + sizeof(u32) + (darc_init_w->entries * 0x20) + 0x80) & 0xFFFFFF80); //Go past darc_init_wat to the nearest 0x80
+#ifdef DEBUG_DARC
 	printf("%.5s\n", &darc_h->magic);
+#endif
 	return darc_h;
 }
 

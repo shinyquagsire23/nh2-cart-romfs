@@ -65,7 +65,7 @@ void __decompressLZ77_11(u8 *in, u32 inputLen, u8 **output, u32 *outputLen)
 		compressedPos += 0x4;
 	}
 	
-	printf("  Decompressed size : %x\n", decompressedSize);
+	//printf("  Decompressed size : %x\n", decompressedSize);
 	
 	out = memalign(32, decompressedSize);
 	
@@ -150,7 +150,7 @@ void __decompressLZ77_10(u8 *in, u32 inputLen, u8 **output, u32 *outputLen)
 		//__errorCheck(-1337, 1);
 	}
 	
-	printf("  Decompressed size : %x\n", decompressedSize);
+	//printf("  Decompressed size : %x\n", decompressedSize);
 	
 	out = memalign(32, decompressedSize);
 
@@ -212,10 +212,10 @@ void decompressLZ77content(u8 *buffer, u32 lenght, u8 **output, u32 *outputLen)
 	switch (buffer[0])
 	{
 		case LZ77_0x10_FLAG:
-			printf("  LZ77 variant 0x10 compressed content\n");
+			//printf("  LZ77 variant 0x10 compressed content\n");
 			__decompressLZ77_10(buffer, lenght, output, outputLen); break;
 		case LZ77_0x11_FLAG:
-			printf("  LZ77 variant 0x11 compressed content\n");
+			//printf("  LZ77 variant 0x11 compressed content\n");
 			__decompressLZ77_11(buffer, lenght, output, outputLen); break;
 	}
 }
