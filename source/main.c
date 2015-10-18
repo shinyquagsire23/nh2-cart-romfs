@@ -52,7 +52,7 @@ void printfile(const char* path)
 }
 
 void *clim_tex_xy7(u8 *decomp_out, u32 decomp_size, u16 *out_data);
-sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size, sf2d_texfmt pixel_format);
+sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size);
 sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size);
 
 int main()
@@ -124,10 +124,10 @@ int main()
 	}
 	
 	printf("All read!");
-	sf2d_texture *tex1 = create_texture_from_clim(box_clim, box_clim_size, TEXFMT_RGBA4);
+	sf2d_texture *tex1 = create_texture_from_clim(box_clim, box_clim_size);
 	sf2d_texture *tex2 = create_texture_from_xy7_clim(decomp_out, decomp_size);
-	sf2d_texture *tex3 = create_texture_from_clim(box_bg_clim, box_bg_size, TEXFMT_ETC1A4);
-	sf2d_texture *tex4 = create_texture_from_clim(box_name, box_name_size, TEXFMT_ETC1A4);
+	sf2d_texture *tex3 = create_texture_from_clim(box_bg_clim, box_bg_size);
+	sf2d_texture *tex4 = create_texture_from_clim(box_name, box_name_size);
 	//clim_tex_xy7(box_clim, box_clim_size, tex1->data);
 	tex1->tiled = 1;
 
@@ -160,10 +160,10 @@ int main()
 	return 0;
 }
 
-sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size, sf2d_texfmt pixel_format)
+sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size)
 {
     clim_header *clim_h = decomp_out + (decomp_size - 0x28);
-	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, pixel_format, SF2D_PLACE_RAM);
+	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, clim_to_sf2d[clim_h->format], SF2D_PLACE_RAM);
 	memcpy(tex->data, decomp_out, clim_h->pixel_data_size);
 	
 	tex->flip_h = 1;
