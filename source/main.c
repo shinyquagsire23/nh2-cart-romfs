@@ -7,6 +7,7 @@
 #include "clim.h"
 #include "garc.h"
 #include "darc.h"
+#include <sf2d.h>
 
 Handle romfsRealHandle;
 
@@ -50,13 +51,16 @@ void printfile(const char* path)
 	}
 }
 
+void *clim_tex_xy7(u8 *decomp_out, u32 decomp_size, u16 *out_data);
+sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size, sf2d_texfmt pixel_format);
+sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size);
+
 int main()
 {
-	gfxInitDefault();
+	//gfxInitDefault();
+	sf2d_init();
+	sf2d_set_clear_color(RGBA8(0x40, 0x40, 0x40, 0xFF));
 	consoleInit(GFX_TOP, NULL);
-	gfxSetDoubleBuffering(GFX_BOTTOM, 0);
-	gfxSetScreenFormat(GFX_BOTTOM, GSP_RGB5_A1_OES);
-	gfxWriteFramebufferInfo(GFX_BOTTOM);
 	
 	Result rc = _srvGetServiceHandle(&romfsRealHandle, "fs:USER");
 	printf("realHandle: %08lX\n", rc);
@@ -105,35 +109,77 @@ int main()
 	if(decomp_out)
 	    clim_print(decomp_out, decomp_size);
 	u32 box_clim_size;
+	void *box_clim;
 	    
 	if(darc_decomp)
 	{
-	    void *box_clim = dfget(pokedarc_get_darc(darc_decomp), "box_wp21.bclim", &box_clim_size);
+	    box_clim = dfget(pokedarc_get_darc(darc_decomp), "cursol01.bclim", &box_clim_size);
 	    printf("darc_file: %x\n", box_clim);
 	}
 	
 	printf("All read!");
+	sf2d_texture *tex1 = create_texture_from_clim(box_clim, box_clim_size, TEXFMT_RGBA4);
+	sf2d_texture *tex2 = create_texture_from_xy7_clim(decomp_out, decomp_size);
+	//clim_tex_xy7(box_clim, box_clim_size, tex1->data);
+	tex1->tiled = 1;
 
 	// Main loop
 	while (aptMainLoop())
 	{
-		gspWaitForVBlank();
-	    gfxFlushBuffers();
-	    gfxSwapBuffers();
 		hidScanInput();
 		
-		if(decomp_out)
-		    clim_draw_xy7(decomp_out, decomp_size, 0, 0);
+		sf2d_start_frame(GFX_BOTTOM, GFX_LEFT);
+			sf2d_draw_rectangle(190, 160, 70, 60, RGBA8(0xFF, 0xFF, 0xFF, 0xFF));
+			sf2d_draw_rectangle(30, 100, 40, 60, RGBA8(0xFF, 0x00, 0xFF, 0xFF));
+			sf2d_draw_texture(tex1, 32, 32);
+			sf2d_draw_texture(tex2, 100, 100);
+		sf2d_end_frame();
+		
+		//if(decomp_out)
+		    //clim_draw_xy7(decomp_out, decomp_size, 0, 0);
 		//clim_draw_xy7(box_clim, box_clim_size, 32, 32);
 
 		u32 kDown = hidKeysDown();
 		if (kDown & KEY_START)
 			break; // break in order to return to hbmenu
+			
+		sf2d_swapbuffers();
 	}
 
+    sf2d_fini();
 	romfsExit();
 	gfxExit();
 	return 0;
+}
+
+sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size, sf2d_texfmt pixel_format)
+{
+    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
+	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, pixel_format, SF2D_PLACE_RAM);
+	memcpy(tex->data, decomp_out, clim_h->pixel_data_size);
+	
+	return tex;
+}
+
+sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size)
+{
+    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
+	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, TEXFMT_RGB5A1, SF2D_PLACE_RAM);
+	
+	u16 *palette = decomp_out+(sizeof(u16)*2);
+	u16 num_colors = *(u16*)(decomp_out + sizeof(u16));
+	u32 squared_width = (clim_h->pixel_data_size / 2) >> 5; //sqrt(pixel_data_size / bpp)
+	u8 *pixel_data = decomp_out + (sizeof(u16)*2) + (sizeof(u16) * num_colors);
+	
+	//Un-palette the data
+	int i;
+	for(i = 0; i < (squared_width * squared_width) / 2; i++)
+	{
+	    *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16))) = palette[(pixel_data[i] & 0xF0) >> 4];
+	    *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
+	}
+	
+	return tex;
 }
 
 void clim_draw_xy7(u8 *decomp_out, u32 decomp_size, u32 x_pos, u32 y_pos)
@@ -230,6 +276,102 @@ void clim_draw_xy7(u8 *decomp_out, u32 decomp_size, u32 x_pos, u32 y_pos)
 	        bx = 0;
 	    }
 	}
+}
+
+void *clim_tex_xy7(u8 *decomp_out, u32 decomp_size, u16 *out_data)
+{
+    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
+	
+	u16 *palette = decomp_out+(sizeof(u16)*2);
+	u16 num_colors = *(u16*)(decomp_out + sizeof(u16));
+	u32 squared_width = (clim_h->pixel_data_size / 2) >> 5; //sqrt(pixel_data_size / bpp)
+	
+	u8 *pixel_data = decomp_out + (sizeof(u16)*2) + (sizeof(u16) * num_colors);
+	
+	int i, x, y, bx, by, mbx, mby, mmbx, mmby;
+		
+	//Draw out that ETC image... Not fun :/
+	for(i = 0, x = 0, y = 0, bx = 0, by = 0, mbx = 0, mby = 0, mmbx = 0, mmby = 0; i < (squared_width*squared_width)/2; i++)
+	{
+	    //if(((pixel_data[i] & 0xF0) >> 4) != 0)
+	        *(u16*)(out_data + ((bx + x + mbx + mmbx) * sizeof(u16)) + ((by + y + mby + mmby) * squared_width * sizeof(u16))) = palette[((pixel_data[i] & 0xF0) >> 4)];
+	    x++;
+	    if(x >= 2)
+	    {
+	        x = 0;
+	        y++;
+	    }
+	    if(y >= 2)
+	    {
+	        mbx += 2;
+	        y = 0;
+	    }
+	    if(mbx >= 4)
+	    {
+	        mby += 2;
+	        mbx = 0;
+	    }
+	    if(mby >= 4)
+	    {
+	        mby = 0;
+	        mmbx += 4;
+	    }
+	    if(mmbx >= (clim_h->tile_width << 2))
+	    {
+	        mmby += 4;
+	        mmbx = 0;
+	    }
+	    if(mmby >= (clim_h->tile_height << 2))
+	    {
+	        mmby = 0;
+	        bx += (clim_h->tile_width << 2);
+	    }
+	    if(bx >= squared_width)
+	    {
+	        by += (clim_h->tile_height << 2);
+	        bx = 0;
+	    }
+	     
+	    //if(pixel_data[i] & 0xF != 0)
+	        *(u16*)(out_data + ((bx + x + mbx + mmbx) * sizeof(u16)) + ((by + y + mby + mmby) * squared_width * sizeof(u16))) = palette[pixel_data[i] & 0xF];
+	    x++;
+	    if(x >= 2)
+	    {
+	        x = 0;
+	        y++;
+	    }
+	    if(y >= 2)
+	    {
+	        mbx += 2;
+	        y = 0;
+	    }
+	    if(mbx >= 4)
+	    {
+	        mby += 2;
+	        mbx = 0;
+	    }
+	    if(mby >= 4)
+	    {
+	        mby = 0;
+	        mmbx += 4;
+	    }
+	    if(mmbx >= (clim_h->tile_width << 2))
+	    {
+	        mmby += 4;
+	        mmbx = 0;
+	    }
+	    if(mmby >= (clim_h->tile_height << 2))
+	    {
+	        mmby = 0;
+	        bx += (clim_h->tile_width << 2);
+	    }
+	    if(bx >= squared_width)
+	    {
+	        by += (clim_h->tile_height << 2);
+	        bx = 0;
+	    }
+	}
+	return out_data;
 }
 
 void clim_print(u8 *decomp_out, u32 decomp_size)
