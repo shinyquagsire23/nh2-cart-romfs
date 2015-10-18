@@ -50,11 +50,6 @@ void printfile(const char* path)
 	}
 }
 
-void *clim_tex_xy7(u8 *decomp_out, u32 decomp_size, u16 *out_data);
-sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size);
-sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size);
-sf2d_texture *load_texture_from_darc(void *darc_data, char *path);
-
 int main()
 {
 	//gfxInitDefault();
@@ -179,15 +174,15 @@ int main()
 		}
 		
 		sf2d_start_frame(GFX_BOTTOM, GFX_LEFT);
-		    draw_texture(wallpaper, 0, 0);
+		    clim_draw_texture(wallpaper, 0, 0);
 		    
-		    draw_texture(mode01, 25, 0);
-		    draw_texture(mode02, 25+50+10, 0);
-		    draw_texture(mode03, 25+50+10+50+10, 0);
+		    clim_draw_texture(mode01, 25, 0);
+		    clim_draw_texture(mode02, 25+50+10, 0);
+		    clim_draw_texture(mode03, 25+50+10+50+10, 0);
 		    
-		    draw_texture(name_box, 20, 20);
-		    draw_texture(left_button, 5, 20);
-		    draw_texture(right_button, 20+name_box->width, 20);
+		    clim_draw_texture(name_box, 20, 20);
+		    clim_draw_texture(left_button, 5, 20);
+		    clim_draw_texture(right_button, 20+name_box->width, 20);
 		    
 		    int x, y;
 		    int i = 1;
@@ -195,12 +190,12 @@ int main()
 		    {
 		        for(x = 0; x < 6; x++)
 		        {
-		            draw_texture(mon[i], 10+(x*32), 45+(y*30));
+		            clim_draw_texture(mon[i], 10+(x*32), 45+(y*30));
 		            i++;
 		        }
 		    }
 			
-			draw_texture(cursor, (int)(10-5+((cursor_mon_x + 1) * 32)-cursor_spot), (int)(45+5+((cursor_mon_y - 1) * 30)+cursor_spot));
+			clim_draw_texture(cursor, (int)(10-5+((cursor_mon_x + 1) * 32)-cursor_spot), (int)(45+5+((cursor_mon_y - 1) * 30)+cursor_spot));
 		sf2d_end_frame();
 
 		u32 kDown = hidKeysDown();
@@ -214,68 +209,4 @@ int main()
 	romfsExit();
 	gfxExit();
 	return 0;
-}
-
-void draw_texture(const sf2d_texture *texture, int x, int y)
-{
-    sf2d_draw_texture_part(texture, x, y, 0, next_pow2(texture->height) - texture->height, texture->width, texture->height);
-}
-
-sf2d_texture *load_texture_from_darc(void *darc_data, char *path)
-{
-    u32 size;
-    void *data;
-    data = dfget(darc_data, path, &size);
-    return create_texture_from_clim(data, size);
-}
-
-sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size)
-{
-    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
-	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, clim_to_sf2d[clim_h->format], SF2D_PLACE_RAM);
-	memcpy(tex->data, decomp_out, clim_h->pixel_data_size);
-	
-	tex->flip_h = 0;
-	tex->flip_v = 1;
-	return tex;
-}
-
-sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size)
-{
-    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
-	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, TEXFMT_RGB5A1, SF2D_PLACE_RAM);
-	
-	u16 *palette = decomp_out+(sizeof(u16)*2);
-	u16 num_colors = *(u16*)(decomp_out + sizeof(u16));
-	u8 *pixel_data = decomp_out + (sizeof(u16)*2) + (sizeof(u16) * num_colors);
-	
-	//Un-palette the data
-	int i;
-	for(i = 0; i < (next_pow2(clim_h->width) * next_pow2(clim_h->height)) / (num_colors > 0x10 ? 1 : 2); i++)
-	{
-	    if(num_colors > 0x10)
-	    {
-	        *(u16*)(tex->data + (i * sizeof(u16))) = palette[pixel_data[i]];
-	    }
-	    else
-	    {
-	        *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16))) = palette[(pixel_data[i] & 0xF0) >> 4];
-	        *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
-	    }
-	}
-	
-	tex->flip_h = 0;
-	tex->flip_v = 1;
-	return tex;
-}
-
-void clim_print(u8 *decomp_out, u32 decomp_size)
-{
-    clim_header *clim_h = decomp_out + (decomp_size - 0x28);
-		
-	printf("gfread: %x %.5s\n", decomp_size, clim_h->magic);
-	u16 num_colors = *(u16*)(decomp_out + sizeof(u16));
-	u32 squared_width = (clim_h->pixel_data_size / 2) >> 5; //sqrt(pixel_data_size / bpp)
-	
-	printf("%x colors, %u x %u, data %u x %u\n", num_colors, clim_h->width, clim_h->height, squared_width, squared_width);
 }

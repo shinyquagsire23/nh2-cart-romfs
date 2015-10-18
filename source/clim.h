@@ -40,9 +40,14 @@ typedef enum {
 	CLIM_A4     = 13,
 } clim_texfmt;
 
-const u8 clim_to_sf2d[14] = { TEXFMT_I8, TEXFMT_A8, TEXFMT_IA4, TEXFMT_IA8, -1, TEXFMT_RGB565, TEXFMT_RGB8, TEXFMT_RGB5A1, TEXFMT_RGBA4, TEXFMT_RGBA8, TEXFMT_ETC1, TEXFMT_ETC1A4, TEXFMT_I4, TEXFMT_A4 };
+const u8 clim_to_sf2d[14];
+const u8 sf2d_to_clim[14];
 
-const u8 sf2d_to_clim[14] = { CLIM_RGBA8, CLIM_RGB8, CLIM_RGB5A1, CLIM_RGB565, CLIM_RGBA4, CLIM_IA8, -1, CLIM_I8, CLIM_A8, CLIM_IA4, CLIM_I4, CLIM_A4, CLIM_ETC1, CLIM_ETC1A4 };
+void clim_draw_texture(const sf2d_texture *texture, int x, int y);
+sf2d_texture *load_texture_from_darc(void *darc_data, char *path);
+sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size);
+sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size);
+void clim_print(u8 *decomp_out, u32 decomp_size);
 
 #ifdef __cplusplus
 }
