@@ -109,17 +109,25 @@ int main()
 	if(decomp_out)
 	    clim_print(decomp_out, decomp_size);
 	u32 box_clim_size;
+	u32 box_bg_size;
+	u32 box_name_size;
 	void *box_clim;
+	void *box_bg_clim;
+	void *box_name;
 	    
 	if(darc_decomp)
 	{
 	    box_clim = dfget(pokedarc_get_darc(darc_decomp), "cursol01.bclim", &box_clim_size);
+	    box_bg_clim = dfget(pokedarc_get_darc(darc_decomp), "box_wp01.bclim", &box_bg_size);
+	    box_name = dfget(pokedarc_get_darc(darc_decomp), "box_name01.bclim", &box_name_size);
 	    printf("darc_file: %x\n", box_clim);
 	}
 	
 	printf("All read!");
 	sf2d_texture *tex1 = create_texture_from_clim(box_clim, box_clim_size, TEXFMT_RGBA4);
 	sf2d_texture *tex2 = create_texture_from_xy7_clim(decomp_out, decomp_size);
+	sf2d_texture *tex3 = create_texture_from_clim(box_bg_clim, box_bg_size, TEXFMT_ETC1A4);
+	sf2d_texture *tex4 = create_texture_from_clim(box_name, box_name_size, TEXFMT_ETC1A4);
 	//clim_tex_xy7(box_clim, box_clim_size, tex1->data);
 	tex1->tiled = 1;
 
@@ -129,10 +137,10 @@ int main()
 		hidScanInput();
 		
 		sf2d_start_frame(GFX_BOTTOM, GFX_LEFT);
-			sf2d_draw_rectangle(190, 160, 70, 60, RGBA8(0xFF, 0xFF, 0xFF, 0xFF));
-			sf2d_draw_rectangle(30, 100, 40, 60, RGBA8(0xFF, 0x00, 0xFF, 0xFF));
-			sf2d_draw_texture(tex1, 32, 32);
+		    sf2d_draw_texture(tex3, 0, 0);
+		    sf2d_draw_texture(tex4, 20, 20);
 			sf2d_draw_texture(tex2, 100, 100);
+			sf2d_draw_texture(tex1, 100, 90);
 		sf2d_end_frame();
 		
 		//if(decomp_out)
@@ -158,6 +166,8 @@ sf2d_texture *create_texture_from_clim(u8 *decomp_out, u32 decomp_size, sf2d_tex
 	sf2d_texture *tex = sf2d_create_texture(clim_h->width, clim_h->height, pixel_format, SF2D_PLACE_RAM);
 	memcpy(tex->data, decomp_out, clim_h->pixel_data_size);
 	
+	tex->flip_h = 1;
+	tex->flip_v = 1;
 	return tex;
 }
 
@@ -179,6 +189,8 @@ sf2d_texture *create_texture_from_xy7_clim(u8 *decomp_out, u32 decomp_size)
 	    *(u16*)(tex->data + (i * sizeof(u16) * sizeof(u16)) + sizeof(u16)) = palette[pixel_data[i] & 0xF];
 	}
 	
+	tex->flip_h = 1;
+	tex->flip_v = 1;
 	return tex;
 }
 
